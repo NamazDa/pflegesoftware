@@ -97,7 +97,7 @@ export default function Home() {
 
                             {[
                                 "Kostenvoranschlag für Maria Schneider erstellt",
-                                "Pflegebox für Ahmet Yilmaz geändert",
+                                "Pflegebox Namaz Davrishov geändert",
                                 "Abrechnung S637 wurde vorbereitet",
                                 "Neuer Vermittler wurde hinzugefügt",
                                 "Dokument für Kostenträger hochgeladen",
