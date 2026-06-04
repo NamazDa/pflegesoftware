@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient, QuoteStatus } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Roles, Permissions } from "../src/lib/rbac/constants";
 import bcrypt from "bcryptjs";
@@ -11,8 +11,6 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-
-
     const hashedPassword = await bcrypt.hash("admin1234", 12);
 
     // ─── 1. PERMISSIONS ───────────────────────────────────────────
@@ -25,26 +23,37 @@ async function main() {
             create: { key, description: key },
         });
     }
+
     console.log("✅ Permissions erstellt");
 
     // ─── 2. ROLLEN ────────────────────────────────────────────────
     const superAdminRole = await prisma.role.upsert({
         where: { name: Roles.SUPER_ADMIN },
         update: {},
-        create: { name: Roles.SUPER_ADMIN, description: "Hat alle Rechte" },
+        create: {
+            name: Roles.SUPER_ADMIN,
+            description: "Hat alle Rechte",
+        },
     });
 
     const adminRole = await prisma.role.upsert({
         where: { name: Roles.ADMIN },
         update: {},
-        create: { name: Roles.ADMIN, description: "Zugriff auf die meisten Bereiche" },
+        create: {
+            name: Roles.ADMIN,
+            description: "Zugriff auf die meisten Bereiche",
+        },
     });
 
     const employeeRole = await prisma.role.upsert({
         where: { name: Roles.EMPLOYEE },
         update: {},
-        create: { name: Roles.EMPLOYEE, description: "Eingeschränkter Zugriff" },
+        create: {
+            name: Roles.EMPLOYEE,
+            description: "Eingeschränkter Zugriff",
+        },
     });
+
     console.log("✅ Rollen erstellt");
 
     // ─── 3. PERMISSIONS PRO ROLLE ─────────────────────────────────
@@ -69,9 +78,17 @@ async function main() {
     // super_admin → alle Permissions
     for (const permission of allPermissions) {
         await prisma.rolePermission.upsert({
-            where: { roleId_permissionId: { roleId: superAdminRole.id, permissionId: permission.id } },
+            where: {
+                roleId_permissionId: {
+                    roleId: superAdminRole.id,
+                    permissionId: permission.id,
+                },
+            },
             update: {},
-            create: { roleId: superAdminRole.id, permissionId: permission.id },
+            create: {
+                roleId: superAdminRole.id,
+                permissionId: permission.id,
+            },
         });
     }
 
@@ -79,10 +96,19 @@ async function main() {
     for (const key of adminPermissionKeys) {
         const permission = allPermissions.find((p) => p.key === key);
         if (!permission) continue;
+
         await prisma.rolePermission.upsert({
-            where: { roleId_permissionId: { roleId: adminRole.id, permissionId: permission.id } },
+            where: {
+                roleId_permissionId: {
+                    roleId: adminRole.id,
+                    permissionId: permission.id,
+                },
+            },
             update: {},
-            create: { roleId: adminRole.id, permissionId: permission.id },
+            create: {
+                roleId: adminRole.id,
+                permissionId: permission.id,
+            },
         });
     }
 
@@ -90,12 +116,22 @@ async function main() {
     for (const key of employeePermissionKeys) {
         const permission = allPermissions.find((p) => p.key === key);
         if (!permission) continue;
+
         await prisma.rolePermission.upsert({
-            where: { roleId_permissionId: { roleId: employeeRole.id, permissionId: permission.id } },
+            where: {
+                roleId_permissionId: {
+                    roleId: employeeRole.id,
+                    permissionId: permission.id,
+                },
+            },
             update: {},
-            create: { roleId: employeeRole.id, permissionId: permission.id },
+            create: {
+                roleId: employeeRole.id,
+                permissionId: permission.id,
+            },
         });
     }
+
     console.log("✅ Rollen mit Permissions verknüpft");
 
     // ─── 4. DEMO TENANT ───────────────────────────────────────────
@@ -110,10 +146,22 @@ async function main() {
     });
 
     await prisma.tenantSetting.upsert({
-        where: { tenantId_key: { tenantId: tenant.id, key: "shipping_provider" } },
-        update: { value: "DHL" },
-        create: { tenantId: tenant.id, key: "shipping_provider", value: "DHL" },
+        where: {
+            tenantId_key: {
+                tenantId: tenant.id,
+                key: "shipping_provider",
+            },
+        },
+        update: {
+            value: "DHL",
+        },
+        create: {
+            tenantId: tenant.id,
+            key: "shipping_provider",
+            value: "DHL",
+        },
     });
+
     console.log("✅ Demo Tenant erstellt");
 
     // ─── 5. DEMO USER ─────────────────────────────────────────────
@@ -130,31 +178,69 @@ async function main() {
         },
     });
 
-    // User → super_admin Rolle
     await prisma.userRole.upsert({
-        where: { userId_roleId: { userId: demoUser.id, roleId: superAdminRole.id } },
+        where: {
+            userId_roleId: {
+                userId: demoUser.id,
+                roleId: superAdminRole.id,
+            },
+        },
         update: {},
-        create: { userId: demoUser.id, roleId: superAdminRole.id },
+        create: {
+            userId: demoUser.id,
+            roleId: superAdminRole.id,
+        },
     });
 
-    // User → Demo Tenant
     await prisma.tenantUser.upsert({
-        where: { tenantId_userId: { tenantId: tenant.id, userId: demoUser.id } },
+        where: {
+            tenantId_userId: {
+                tenantId: tenant.id,
+                userId: demoUser.id,
+            },
+        },
         update: {},
-        create: { tenantId: tenant.id, userId: demoUser.id, status: "active" },
+        create: {
+            tenantId: tenant.id,
+            userId: demoUser.id,
+            status: "active",
+        },
     });
+
     console.log("✅ Demo User erstellt");
 
-    console.log("🎉 Seed fertig.");
+    // ─── 6. ALTE DEMO KUNDEN + QUOTES LÖSCHEN ─────────────────────
 
+    const existingDemoCustomers = await prisma.customer.findMany({
+        where: {
+            tenantId: tenant.id,
+            source: "manual",
+        },
+        select: {
+            id: true,
+        },
+    });
 
-// ─── 6. DEMO KUNDEN ─────────────────────────────────────────────
+    if (existingDemoCustomers.length > 0) {
+        await prisma.quote.deleteMany({
+            where: {
+                customerId: {
+                    in: existingDemoCustomers.map((customer) => customer.id),
+                },
+            },
+        });
+    }
+
     await prisma.customer.deleteMany({
         where: {
             tenantId: tenant.id,
             source: "manual",
         },
     });
+
+    console.log("✅ Alte Demo Kunden und Kostenvoranschläge gelöscht");
+
+    // ─── 7. DEMO KUNDEN ───────────────────────────────────────────
 
     const demoCustomers = [
         {
@@ -259,6 +345,90 @@ async function main() {
     }
 
     console.log("✅ Demo Kunden erstellt");
+
+    // ─── 8. DEMO KOSTENVORANSCHLÄGE ───────────────────────────────
+
+    const customers = await prisma.customer.findMany({
+        where: {
+            tenantId: tenant.id,
+            source: "manual",
+        },
+    });
+
+    if (customers.length === 0) {
+        throw new Error("Keine Demo-Kunden gefunden. Quotes können nicht erstellt werden.");
+    }
+
+    const insurances = [
+        "Techniker",
+        "BKK Pfalz",
+        "AOK Hessen",
+        "Barmer",
+        "DAK",
+        "IKK classic",
+    ];
+
+    const brokers = [
+        "Fatih Deniz",
+        "Toygar Danaci",
+        "Namaz Davrishov",
+        "IT-Labs",
+    ];
+
+    const statuses = [
+        QuoteStatus.OPEN,
+        QuoteStatus.APPROVED,
+        QuoteStatus.REJECTED,
+        QuoteStatus.NO_RESPONSE,
+        QuoteStatus.FAILED,
+    ];
+
+    const quoteData = Array.from({ length: 25 }).map((_, index) => {
+        const customer = customers[index % customers.length];
+        const status = statuses[index % statuses.length];
+        const type = index % 2 === 0 ? "PG51" : "PG54";
+
+        const createdAt = new Date();
+        createdAt.setDate(createdAt.getDate() - index);
+
+        const approvedFrom =
+            status === QuoteStatus.APPROVED ? new Date() : null;
+
+        const approvedUntil =
+            status === QuoteStatus.APPROVED
+                ? new Date(new Date().setMonth(new Date().getMonth() + 12))
+                : null;
+
+        return {
+            customerId: customer.id,
+            customerNumber: `KD-${10000 + index}`,
+            type,
+            status,
+            insuranceName: insurances[index % insurances.length],
+            processNumber: `KV-2026-${1000 + index}`,
+            approvalNumber:
+                status === QuoteStatus.APPROVED ? `GEN-${5000 + index}` : null,
+            approvalDate:
+                status === QuoteStatus.APPROVED ? new Date() : null,
+            approvedFrom,
+            approvedUntil,
+            copaymentFree: index % 3 === 0,
+            rejectionReason:
+                status === QuoteStatus.REJECTED
+                    ? "Unterlagen unvollständig"
+                    : null,
+            pdfUrl: "/demo/kostenvoranschlag.pdf",
+            brokerName: brokers[index % brokers.length],
+            createdAt,
+        };
+    });
+
+    await prisma.quote.createMany({
+        data: quoteData,
+    });
+
+    console.log("✅ Demo Kostenvoranschläge erstellt");
+
     console.log("🎉 Seed fertig.");
 }
 
