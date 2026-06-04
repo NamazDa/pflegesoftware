@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button, Card, Input, EmptyState } from '@/components/ui'
 import { CustomerStatusBadge } from '@/components/ui/Badge'
 import { formatDate, fullName } from '@/lib/utils/format'
@@ -13,6 +14,8 @@ interface CustomerListProps {
 }
 
 export function CustomerList({ customers, onNew, onSelect }: CustomerListProps) {
+
+    const router = useRouter()
   const [filters, setFilters] = useState<CustomerFilters>({ search: '' })
 
   const filtered = useMemo(() => {
@@ -73,7 +76,14 @@ export function CustomerList({ customers, onNew, onSelect }: CustomerListProps) 
                 <tr
                   key={customer.id}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onSelect?.(customer)}
+                  onClick={() => {
+                      if (onSelect) {
+                          onSelect(customer)
+                          return
+                      }
+
+                      router.push(`/app/kunden/${customer.id}`)
+                  }}
                 >
                   <td className="px-4 py-3 font-medium text-gray-900">
                     {fullName(customer.firstName, customer.lastName)}

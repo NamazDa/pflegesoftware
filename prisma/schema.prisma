@@ -84,6 +84,7 @@ model Tenant {
 
   users    TenantUser[]
   settings TenantSetting[]
+  customers Customer[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -119,4 +120,61 @@ model TenantSetting {
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, key])
+}
+
+model Customer {
+  id       String @id @default(uuid())
+  tenantId String
+
+  firstName String
+  lastName  String
+
+  insuranceNumber String?
+  birthDate       DateTime?
+
+  status String?
+  source String?
+
+  tags String[]
+
+  phone String?
+  email String?
+
+  // Adresse
+  street            String?
+  houseNumber       String?
+  houseNumberSuffix String?
+  zip               String?
+  city              String?
+  country           String? @default("DE")
+
+  // Pflege / Versicherung
+  careLevel     Int?
+  insuranceType String?
+  insuranceName String?
+  insuranceIk   String?
+
+  // Vermittler
+  brokerName   String?
+  brokerNumber String?
+  brokerShop   String?
+
+  // PG/KV Status
+  pg51Status String?
+  pg54Status String?
+
+  notes String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([tenantId])
+  @@index([lastName])
+  @@index([insuranceNumber])
+  @@index([status])
+  @@index([insuranceName])
+  @@index([brokerName])
 }

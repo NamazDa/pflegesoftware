@@ -146,6 +146,120 @@ async function main() {
     console.log("✅ Demo User erstellt");
 
     console.log("🎉 Seed fertig.");
+
+
+// ─── 6. DEMO KUNDEN ─────────────────────────────────────────────
+    await prisma.customer.deleteMany({
+        where: {
+            tenantId: tenant.id,
+            source: "manual",
+        },
+    });
+
+    const demoCustomers = [
+        {
+            firstName: "Luigi",
+            lastName: "Hinz",
+            status: "PENDING_APPROVAL",
+            insuranceNumber: "R268299611",
+            birthDate: new Date("1974-01-01"),
+            phone: "015110100054",
+            email: "luigi.hinz@example.de",
+            source: "manual",
+            tags: ["PG51", "PG54"],
+            notes: "Warten auf Genehmigung",
+
+            street: "Junostraße",
+            houseNumber: "27",
+            zip: "35745",
+            city: "Herborn",
+            country: "DE",
+
+            careLevel: 2,
+            insuranceType: "gesetzlich",
+            insuranceName: "Techniker",
+            insuranceIk: "182171012",
+
+            brokerName: "Fatih Deniz",
+            brokerNumber: "2",
+            brokerShop: "IT-Labs",
+
+            pg51Status: "genehmigt",
+            pg54Status: "genehmigt",
+        },
+        {
+            firstName: "Kayla",
+            lastName: "Yürür",
+            status: "ACTIVE",
+            insuranceNumber: "A713471064",
+            birthDate: new Date("1952-11-04"),
+            phone: "017636331333",
+            email: "kayla.yueruer@example.de",
+            source: "manual",
+            tags: ["PG51", "PG54"],
+            notes: "Aktiver Kunde",
+
+            street: "Konrad-Adenauer-Straße",
+            houseNumber: "3",
+            zip: "35745",
+            city: "Herborn",
+            country: "DE",
+
+            careLevel: 3,
+            insuranceType: "gesetzlich",
+            insuranceName: "BKK Pfalz",
+            insuranceIk: "105313145",
+
+            brokerName: "Fatih Deniz",
+            brokerNumber: "2",
+            brokerShop: "IT-Labs",
+
+            pg51Status: "genehmigt",
+            pg54Status: "genehmigt",
+        },
+        {
+            firstName: "Fatma",
+            lastName: "Tetrilik",
+            status: "PENDING_APPROVAL",
+            insuranceNumber: "T956048860",
+            birthDate: new Date("1959-06-08"),
+            phone: null,
+            email: "fatma.tetrilik@example.de",
+            source: "manual",
+            tags: ["PG51", "PG54"],
+            notes: "Warten auf Genehmigung",
+
+            street: "Lempstraße",
+            houseNumber: "40",
+            zip: "35630",
+            city: "Ehringshausen",
+            country: "DE",
+
+            careLevel: 2,
+            insuranceType: "gesetzlich",
+            insuranceName: "AOK Hessen",
+            insuranceIk: "105313145",
+
+            brokerName: "Fatih Deniz",
+            brokerNumber: "2",
+            brokerShop: "IT-Labs",
+
+            pg51Status: "offen",
+            pg54Status: "offen",
+        },
+    ];
+
+    for (const customer of demoCustomers) {
+        await prisma.customer.create({
+            data: {
+                tenantId: tenant.id,
+                ...customer,
+            },
+        });
+    }
+
+    console.log("✅ Demo Kunden erstellt");
+    console.log("🎉 Seed fertig.");
 }
 
 main()
