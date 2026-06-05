@@ -48,7 +48,7 @@ model Quote {
   id String @id @default(uuid())
 
   customerId String
-  customer Customer @relation(fields: [customerId], references: [id])
+  customer   Customer @relation(fields: [customerId], references: [id])
 
   customerNumber String?
 
@@ -58,11 +58,11 @@ model Quote {
 
   insuranceName String?
 
-  processNumber String?
+  processNumber  String?
   approvalNumber String?
 
-  approvalDate DateTime?
-  approvedFrom DateTime?
+  approvalDate  DateTime?
+  approvedFrom  DateTime?
   approvedUntil DateTime?
 
   copaymentFree Boolean?
@@ -77,13 +77,11 @@ model Quote {
   updatedAt DateTime @updatedAt
 }
 
-
-
 model User {
-  id    String @id @default(uuid())
-  email String @unique
+  id       String  @id @default(uuid())
+  email    String  @unique
   password String?
-  name String?
+  name     String?
 
   userRoles   UserRole[]
   tenantUsers TenantUser[]
@@ -126,8 +124,8 @@ model Tenant {
   slug   String @unique
   status String @default("active")
 
-  users    TenantUser[]
-  settings TenantSetting[]
+  users     TenantUser[]
+  settings  TenantSetting[]
   customers Customer[]
 
   createdAt DateTime  @default(now())
@@ -169,13 +167,95 @@ model TenantSetting {
 model CostCarrier {
   id String @id @default(uuid())
 
-  name String
+  name     String
   ikNumber String @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Broker {
+  id       String @id @default(uuid())
+  tenantId String
+
+  // Stammdaten
+  name               String
+  type               String?
+  brokerNumber       String?
+  email              String?
+  invoiceEmail       String?
+  notifyNewCustomer  Boolean @default(false)
+  notifyApproval     Boolean @default(false)
+  iban               String?
+  attachmentPassword String?
+  comment            String?
+  boxCreationMode    String?
+
+  // Adresse
+  title             String?
+  salutation        String?
+  firstName         String?
+  lastName          String?
+  street            String?
+  houseNumber       String?
+  houseNumberSuffix String?
+  addressAddition   String?
+  addressAddition2  String?
+  zip               String?
+  city              String?
+  country           String? @default("DE")
+
+  // API Zugangsdaten
+  apiEnabled        Boolean @default(false)
+  apiKey            String?
+  webhookUrl        String?
+  externalPartnerId String?
+
+  // Relationen
+  fees BrokerConsultingFee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([name])
+  @@index([brokerNumber])
+}
+
+model BrokerConsultingFee {
+  id       String @id @default(uuid())
+  brokerId String
+
+  validFrom String // Format: YYYY-MM
+  validTo   String // Format: YYYY-MM
+
+  type String // FIX, CONTRIBUTION_MARGIN, TIERED
+
+  fixedAmount      Decimal? @db.Decimal(10, 2)
+  contributionRate Decimal? @db.Decimal(10, 2)
+  boxFixedCost     Decimal? @db.Decimal(10, 2)
+
+  broker Broker                    @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  tiers  BrokerConsultingFeeTier[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([brokerId])
+}
+
+model BrokerConsultingFeeTier {
+  id    String @id @default(uuid())
+  feeId String
+
+  fromQuantity Int
+  toQuantity   Int
+  amount       Decimal @db.Decimal(10, 2)
+
+  fee BrokerConsultingFee @relation(fields: [feeId], references: [id], onDelete: Cascade)
+
+  @@index([feeId])
+}
 
 model Customer {
   id       String @id @default(uuid())
@@ -190,10 +270,10 @@ model Customer {
   status String?
   source String?
 
-  tags String[]
+  tags   String[]
   quotes Quote[]
-  phone String?
-  email String?
+  phone  String?
+  email  String?
 
   // Adresse
   street            String?
